@@ -9,10 +9,12 @@ var wheelBuffer;
 var rimBuffer;
 var tiesBuffer;
 var railBuffer;
-var sphereBuffer;
+var headBuffer;
+var eyeBuffer;
 var tiePoints = [];
 var railPoints = [];
-var sphereVerts;
+var headVerts;
+var eyeVerts;
 var mv;
 var c;
 var eye;
@@ -25,6 +27,7 @@ var rim1mv;
 var rim2mv;
 var rim3mv;
 var rim4mv;
+var riderEyesmv;
 var riderHeadmv;
 var initialLoad = true;
 
@@ -157,7 +160,7 @@ window.onload = function init() {
     makeWheelsAndBuffer();
     makeRimsAndBuffer();
     makeGroundAndBuffer();
-    makeSphereAndBuffer(30);
+    makeSpheresAndBuffer(30);
 
     //Draw to the entire canvas
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -602,41 +605,69 @@ function makeWheelsAndBuffer() {
     vColorvPosition();
 }
 
-function makeSphereAndBuffer(subdiv){
+function makeSpheresAndBuffer(subdiv){
 
     var step = (360.0 / subdiv)*(Math.PI / 180.0); //how much do we increase the angles by per triangle?
-    sphereVerts = [];
+    headVerts = [];
+    eyeVerts = [];
 
     for (var lat = 0; lat <= Math.PI ; lat += step){ //latitude
         for (var lon = 0; lon + step <= 2*Math.PI; lon += step){ //longitude
             //triangle 1
-            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
-            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
-            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
-            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
-            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
-            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
-            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
-            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.10));
+            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
+            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
+            headVerts.push(vec4(.75, .75, .75, 1.0));
+            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
+            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
+            headVerts.push(vec4(.75, .75, .75, 1.0));
+            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
+            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            headVerts.push(vec4(.75, .75, .75, 1.10));
 
             //triangle 2
-            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
-            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
-            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
-            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
-            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
-            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
-            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
-            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
+            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            headVerts.push(vec4(.75, .75, .75, 1.0));
+            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
+            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
+            headVerts.push(vec4(.75, .75, .75, 1.0));
+            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
+            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
+            headVerts.push(vec4(.75, .75, .75, 1.0));
+
+            //triangle 1
+            eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
+            eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
+            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
+            eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
+            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
+            eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.10));
+
+            //triangle 2
+            eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
+            eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
+            eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
+            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
+            eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
+            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
         }
     }
 
     //and send it over to graphics memory
-    sphereBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, sphereBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphereVerts), gl.STATIC_DRAW);
+    headBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(headVerts), gl.STATIC_DRAW);
+
+    eyeBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, eyeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(eyeVerts), gl.STATIC_DRAW);
+
 }
 
 //updating to assign movement data
@@ -818,7 +849,7 @@ function wheelDraw(){
 function sphereDraw(){
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 48, 0);
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 48, 32);
-    gl.drawArrays(gl.TRIANGLES, 0, sphereVerts.length/3);
+    gl.drawArrays(gl.TRIANGLES, 0, headVerts.length/3);
 }
 
 function fullCartDraw(){
@@ -895,7 +926,12 @@ function riderDraw(){
     riderHeadmv = mult(cartmv, translate(0,4,.5));
     riderHeadmv = mult(riderHeadmv, scalem(.75,.75,.75));
     gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
-    gl.bindBuffer(gl.ARRAY_BUFFER, sphereBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
+    sphereDraw();
+    riderEyesmv = mult(riderHeadmv, translate(.5,.15,.75));
+    riderEyesmv = mult(riderEyesmv, scalem(.25,.25,.25));
+    gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
+    gl.bindBuffer(gl.ARRAY_BUFFER, eyeBuffer);
     sphereDraw();
 }
 
