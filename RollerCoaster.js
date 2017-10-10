@@ -9,10 +9,10 @@ var wheelBuffer;
 var rimBuffer;
 var tiesBuffer;
 var railBuffer;
-var riderHeadBuffer;
+var sphereBuffer;
 var tiePoints = [];
 var railPoints = [];
-var riderHeadVerts;
+var sphereVerts;
 var mv;
 var c;
 var eye;
@@ -96,7 +96,8 @@ window.onload = function init() {
                 break;
             case "x":
                 if(camNum === 1)
-                    zoom -=1;
+                    if(zoom != 1)
+                        zoom -=1;
                 break;
             case "z":
                 if(camNum === 1)
@@ -156,7 +157,7 @@ window.onload = function init() {
     makeWheelsAndBuffer();
     makeRimsAndBuffer();
     makeGroundAndBuffer();
-    makeRiderHeadAndBuffer();
+    makeSphereAndBuffer(30);
 
     //Draw to the entire canvas
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -521,14 +522,14 @@ function makeRimsAndBuffer() {
             b = 0.0;
         }
         //Creates the rims by drawing triangles all sharing a central vertex
-        z1 = (Math.cos(theta * i)*0.66)-axel;
+        z1 = (Math.cos(theta * i)*0.66);
         y1 = (Math.sin(theta * i)*0.66);
         //This is the center point
         rimpoints.push(vec4(0, 0, 0, 1.0));
         rimpoints.push(vec4(r, g, b, 1.0));
         if(i < segments){
             //The outside triangle vertices
-            z2 = (Math.cos(theta * (i+1))*0.66)-axel;
+            z2 = (Math.cos(theta * (i+1))*0.66);
             y2 = (Math.sin(theta * (i+1))*0.66);
             rimpoints.push(vec4(0, y1, z1, 1.0));
             rimpoints.push(vec4(r, g, b, 1.0));
@@ -601,35 +602,41 @@ function makeWheelsAndBuffer() {
     vColorvPosition();
 }
 
-function makeRiderHeadAndBuffer(subdiv){
+function makeSphereAndBuffer(subdiv){
 
     var step = (360.0 / subdiv)*(Math.PI / 180.0); //how much do we increase the angles by per triangle?
-    riderHeadVerts = [];
+    sphereVerts = [];
 
     for (var lat = 0; lat <= Math.PI ; lat += step){ //latitude
         for (var lon = 0; lon + step <= 2*Math.PI; lon += step){ //longitude
             //triangle 1
-            riderHeadVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
-            riderHeadVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
-            riderHeadVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
-            riderHeadVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
-            riderHeadVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
-            riderHeadVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
+            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
+            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.10));
 
             //triangle 2
-            riderHeadVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
-            riderHeadVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            riderHeadVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
-            riderHeadVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
-            riderHeadVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
-            riderHeadVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
+            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
+            sphereVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
         }
     }
 
     //and send it over to graphics memory
-    riderHeadBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, riderHeadBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(riderHeadVerts), gl.STATIC_DRAW);
+    sphereBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, sphereBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphereVerts), gl.STATIC_DRAW);
 }
 
 //updating to assign movement data
@@ -669,7 +676,7 @@ function render(){
 
         //Setting the field of view
         if(freeRoamSelect === "car")
-            mv = lookAt(vec3(0,70,dolly), vec3(trackpoints[count][0], trackpoints[count][1], trackpoints[count][2]), vec3(0, 1, 0));
+            mv = lookAt(vec3(0,70,dolly), vec3(trackpoints[count][0], trackpoints[count][1]+2, trackpoints[count][2]), vec3(0, 1, 0));
         else
             mv = lookAt(vec3(0,70,dolly), vec3(0,10,0), vec3(0,1,0));
 
@@ -716,7 +723,7 @@ function render(){
 
         if(initialLoad){
             fullCartDraw();
-            fullRiderDraw();
+            riderDraw();
             initialLoad = false;
         }
         //Creating the ground square
@@ -729,7 +736,7 @@ function render(){
         if (mode === "go") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to stop the cart's movement.");
             fullCartDraw();
-            fullRiderDraw();
+            riderDraw();
         }
         else if (mode === "stop") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to move the cart.");
@@ -767,7 +774,7 @@ function render(){
             rimDraw();
 
             gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
-            sphereDraw();
+            riderDraw();
         }
     }
 }
@@ -809,8 +816,9 @@ function wheelDraw(){
 }
 
 function sphereDraw(){
-    // gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 16, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, riderHeadVerts.length/2);
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 48, 0);
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 48, 32);
+    gl.drawArrays(gl.TRIANGLES, 0, sphereVerts.length/3);
 }
 
 function fullCartDraw(){
@@ -828,6 +836,7 @@ function fullCartDraw(){
     c = transpose(c);
 
     cartmv = mult(mv,c);
+    cartmv = mult(cartmv, translate(0,.25,0));
     gl.uniformMatrix4fv(umv, false, flatten(cartmv));
     gl.bindBuffer(gl.ARRAY_BUFFER, cartBuffer);
     prismDraw();
@@ -859,33 +868,34 @@ function fullCartDraw(){
     //All rims are drawn based on their corresponding wheel location
     rim1mv = mult(wheel1mv, translate(0, 0, 1));
     rim1mv = mult(rim1mv, rotateX(rotateAngle));
-    rim1mv = mult(rim1mv, translate(.25, 0, 1));
+    rim1mv = mult(rim1mv, translate(.25, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim1mv));
     rimDraw();
 
     rim2mv = mult(wheel2mv, translate(0, 0, 1));
     rim2mv = mult(rim2mv, rotateX(rotateAngle));
-    rim2mv = mult(rim2mv, translate(.25, 0, 1));
+    rim2mv = mult(rim2mv, translate(.25, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim2mv));
     rimDraw();
 
     rim3mv = mult(wheel3mv, translate(0, 0, 1));
     rim3mv = mult(rim3mv, rotateX(rotateAngle));
-    rim3mv = mult(rim3mv, translate(.25, 0, 1));
+    rim3mv = mult(rim3mv, translate(.25, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim3mv));
     rimDraw();
 
     rim4mv = mult(wheel4mv, translate(0, 0, 1));
     rim4mv = mult(rim4mv, rotateX(rotateAngle));
-    rim4mv = mult(rim4mv, translate(.25, 0, 1));
+    rim4mv = mult(rim4mv, translate(.25, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim4mv));
     rimDraw();
 }
 
-function fullRiderDraw(){
-    riderHeadmv = mult(cartmv, translate(0,2,0));
+function riderDraw(){
+    riderHeadmv = mult(cartmv, translate(0,4,.5));
+    riderHeadmv = mult(riderHeadmv, scalem(.75,.75,.75));
     gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
-    gl.bindBuffer(gl.ARRAY_BUFFER, riderHeadBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, sphereBuffer);
     sphereDraw();
 }
 
