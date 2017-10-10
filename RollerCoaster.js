@@ -42,6 +42,8 @@ var zoffset;
 var xangle;
 var yangle;
 var zangle;
+var headRot = false;
+var headRotAng;
 
 var segments = 20; //How many triangles make up each wheel
 var axel = 1;
@@ -59,6 +61,9 @@ var camNum = 1;
 var freeRoamSelect = "center";
 var zoom = 45;
 var dolly = 200;
+var n;
+var v;
+var u;
 
 var trackpoints = [];
 window.onload = function init() {
@@ -91,6 +96,15 @@ window.onload = function init() {
     //Note that arrow keys are only picked up by keydown, not keypress for some reason
     window.addEventListener("keydown" ,function(event){
         switch(event.key) {
+            //left
+            case 37:
+                headRotAng = 1;
+                headRot = true;
+                break;
+            case "39":
+                headRotAng = -1;
+                headRot = true;
+                break;
             case "m":
                 if(mode === "go")
                     mode = "stop";
@@ -705,11 +719,30 @@ function render(){
         var v2;
         var c2;
 
+        var tempPoint;
         //Setting the field of view
-        if(freeRoamSelect === "car")
-            mv = lookAt(vec3(0,70,dolly), vec3(trackpoints[count][0], trackpoints[count][1]+2, trackpoints[count][2]), vec3(0, 1, 0));
-        else
-            mv = lookAt(vec3(0,70,dolly), vec3(0,10,0), vec3(0,1,0));
+        if(camNum === 1) { //free
+            if (freeRoamSelect === "car") {
+                cartTransMat();
+                mv = lookAt(vec3(0, 70, dolly), vec3(trackpoints[count][0], trackpoints[count][1] + 2, trackpoints[count][2]), vec3(0, 1, 0));
+            }
+            else
+                mv = lookAt(vec3(0, 70, dolly), vec3(0, 10, 0), vec3(0, 1, 0));
+        } else if(camNum === 2) { //viewpoint
+            mv = mult(mv, c);
+            mv = mult(mv, translate(0,4,.5));
+            tempPoint = vec4(0,0,0,1);
+            tempPoint = mult(translate(0,4,.5), tempPoint);
+            tempPoint = mult(c, tempPoint);
+            mv = lookAt(vec3(tempPoint), add(vec3(tempPoint), vec3(v)), vec3(0,1,0));
+        } else if(camNum === 3) { //reaction
+            mv = mult(mv, c);
+            mv = mult(mv, translate(0,4,.5));
+            tempPoint = vec4(0,0,0,1);
+            tempPoint = mult(translate(0,4,10), tempPoint);
+            tempPoint = mult(c, tempPoint);
+            mv = lookAt(add(vec3(tempPoint), vec3(v)), vec3(tempPoint), vec3(0,1,0));
+        }
 
         //Setting up and completing the translation matrix for rails and rail ties
         for(var i = 0; i < trackpoints.length; i++) {
@@ -753,6 +786,7 @@ function render(){
         }
 
         if(initialLoad){
+            cartTransMat();
             fullCartDraw();
             riderDraw();
             initialLoad = false;
@@ -766,45 +800,13 @@ function render(){
 
         if (mode === "go") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to stop the cart's movement.");
+            cartTransMat();
             fullCartDraw();
             riderDraw();
         }
         else if (mode === "stop") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to move the cart.");
-
-            gl.uniformMatrix4fv(umv, false, flatten(cartmv));
-            gl.bindBuffer(gl.ARRAY_BUFFER, cartBuffer);
-            prismDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(wheel1mv));
-            gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
-            wheelDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(wheel2mv));
-            gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
-            wheelDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(wheel3mv));
-            gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
-            wheelDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(wheel4mv));
-            gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
-            wheelDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(rim1mv));
-            rimDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(rim2mv));
-            rimDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(rim3mv));
-            rimDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(rim4mv));
-            rimDraw();
-
-            gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
+            fullCartDraw();
             riderDraw();
         }
     }
@@ -849,10 +851,10 @@ function wheelDraw(){
 function sphereDraw(){
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 48, 0);
     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 48, 32);
-    gl.drawArrays(gl.TRIANGLES, 0, headVerts.length/3);
+    gl.drawArrays(gl.TRIANGLES, 0, (headVerts.length/3));
 }
 
-function fullCartDraw(){
+function cartTransMat(){
     //Setting up and completing the translation matrix for the cart body
     if(count === trackpoints.length-2)
         eye = vec4(trackpoints[0][0], trackpoints[0][1], trackpoints[0][2], 1.0);
@@ -860,12 +862,14 @@ function fullCartDraw(){
         eye = vec4(trackpoints[count+2][0], trackpoints[count+2][1], trackpoints[count+2][2], 1.0);
     var at = vec4(trackpoints[count][0], trackpoints[count][1], trackpoints[count][2], 1.0);
     var up = vec4(0,1,0,0);
-    var v = normalize( subtract(eye, at));
-    var n = vec4( normalize( cross(v, up)), 0);
-    var u = vec4( normalize( cross(n, v)), 0);
+    v = normalize( subtract(eye, at));
+    n = vec4( normalize( cross(v, up)), 0);
+    u = vec4( normalize( cross(n, v)), 0);
     c = mat4(n,u,v,at);
     c = transpose(c);
+}
 
+function fullCartDraw(){
     cartmv = mult(mv,c);
     cartmv = mult(cartmv, translate(0,.25,0));
     gl.uniformMatrix4fv(umv, false, flatten(cartmv));
@@ -879,19 +883,19 @@ function fullCartDraw(){
     wheelDraw();
 
 
-    wheel2mv = mult(cartmv, translate(1, 1, 0)); //front right
+    wheel2mv = mult(cartmv, translate(1, 1, 0)); //front left
     gl.uniformMatrix4fv(umv, false, flatten(wheel2mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
 
 
-    wheel3mv = mult(cartmv, translate(-1.5, 1, -2.5)); //front right
+    wheel3mv = mult(cartmv, translate(-1.5, 1, -2.5)); //rear right
     gl.uniformMatrix4fv(umv, false, flatten(wheel3mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
 
 
-    wheel4mv = mult(cartmv, translate(1, 1, -2.5)); //front right
+    wheel4mv = mult(cartmv, translate(1, 1, -2.5)); //front left
     gl.uniformMatrix4fv(umv, false, flatten(wheel4mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
@@ -925,6 +929,10 @@ function fullCartDraw(){
 function riderDraw(){
     riderHeadmv = mult(cartmv, translate(0,4,.5));
     riderHeadmv = mult(riderHeadmv, scalem(.75,.75,.75));
+    if(headRot === true) {
+        riderHeadmv = mult(riderHeadmv, rotateY(headRotAng));
+        headRot = false;
+    }
     gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
     gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
     sphereDraw();
@@ -933,7 +941,8 @@ function riderDraw(){
     gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
     gl.bindBuffer(gl.ARRAY_BUFFER, eyeBuffer);
     sphereDraw();
+    riderEyesmv = mult(riderHeadmv, translate(-.5,.15,.75));
+    riderEyesmv = mult(riderEyesmv, scalem(.25,.25,.25));
+    gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
+    sphereDraw();
 }
-
-
-
