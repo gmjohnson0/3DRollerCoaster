@@ -30,6 +30,7 @@ var rim4mv;
 var riderEyesmv;
 var riderHeadmv;
 var initialLoad = true;
+var tempPoint;
 
 var umv;
 var uproj;
@@ -121,15 +122,18 @@ window.onload = function init() {
                 break;
             case "z":
                 if(camNum === 1)
-                    zoom +=1;
+                    if(zoom != 100)
+                        zoom +=1;
                 break;
             case "q":
                 if(camNum === 1)
-                    dolly -=1;
+                    if(dolly != 1)
+                        dolly -=1;
                 break;
             case "e":
                 if(camNum === 1)
-                    dolly +=1;
+                    if(dolly !=235  )
+                        dolly +=1;
                 break;
             case "f":
                 if (freeRoamSelect === "center") {
@@ -706,7 +710,8 @@ function update() {
         if (count === trackpoints.length - 2)
             count = 0;
     }
-    cartTransMat();
+    if(parseComplete)
+        cartTransMat();
     requestAnimationFrame(render);
 }
 
@@ -729,7 +734,6 @@ function render(){
         var v2;
         var c2;
 
-        var tempPoint;
         //Setting the field of view
         if(camNum === 1) { //free
             if (freeRoamSelect === "car") {
@@ -885,12 +889,10 @@ function fullCartDraw(){
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
 
-
     wheel2mv = mult(cartmv, translate(1, 1, 0)); //front left
     gl.uniformMatrix4fv(umv, false, flatten(wheel2mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
-
 
     wheel3mv = mult(cartmv, translate(-1.5, 1, -2.5)); //rear right
     gl.uniformMatrix4fv(umv, false, flatten(wheel3mv));
