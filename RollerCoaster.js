@@ -301,89 +301,89 @@ function makeRailsAndBuffer(){
 }
 
 function makeTiesAndBuffer(){
-        //pos end
-        tiePoints.push(vec4(2, - 1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(- 2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(- 2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(- 2,  - 1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, - 1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    //pos end
+    tiePoints.push(vec4(2, - 1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(- 2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(- 2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(- 2,  - 1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, - 1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
-        //neg end
-        tiePoints.push(vec4(-2, - 1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, - 1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, - 1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    //neg end
+    tiePoints.push(vec4(-2, - 1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, - 1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, - 1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
-        //top
-        tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    //top
+    tiePoints.push(vec4(-2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
-        //bottom
-        tiePoints.push(vec4(-2, -1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2,  -1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, -1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    //bottom
+    tiePoints.push(vec4(-2, -1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2,  -1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, -1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
-        //left
-        tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, -1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    //left
+    tiePoints.push(vec4(-2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, -1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
-        //right
-        tiePoints.push(vec4(2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, -1, -0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2,  -1, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
-        tiePoints.push(vec4(2, 0, 0.5, 1.0));
-        tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    //right
+    tiePoints.push(vec4(2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, -1, -0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2,  -1, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(2, 0, 0.5, 1.0));
+    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
     tiesBuffer = gl.createBuffer();
     //tell WebGL that the buffer we just created is the one we want to work with right now
@@ -769,6 +769,7 @@ function render(){
 
             //using the translation matrix to generate railway ties in the correct facing
             var trackpointsmv = mult(mv, c2);
+            trackpointsmv = mult(trackpointsmv, scalem(1.25,1,1));
             gl.uniformMatrix4fv(umv, false, flatten(trackpointsmv));
             gl.bindBuffer(gl.ARRAY_BUFFER, tiesBuffer);
             gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
@@ -777,8 +778,8 @@ function render(){
 
             //using the translation matrix to generate rail sections perpendicular to the tie of the same point
             var railpointsmv = mult(mv, c2);
-            railpointsmv = mult(railpointsmv, scalem(.2,.5,3.5));
-            railpointsmv = mult(railpointsmv, translate(5,0,0));
+            railpointsmv = mult(railpointsmv, scalem(.15,.5,3.5));
+            railpointsmv = mult(railpointsmv, translate(9,0,0));
             gl.uniformMatrix4fv(umv, false, flatten(railpointsmv));
             gl.bindBuffer(gl.ARRAY_BUFFER, railBuffer);
             gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
@@ -786,7 +787,7 @@ function render(){
             gl.drawArrays(gl.TRIANGLES, 0, tiePoints.length / 2);
 
             //Creating a second rail by translating from the first
-            railpointsmv = mult(railpointsmv, translate(-10,0,0));
+            railpointsmv = mult(railpointsmv, translate(-18,0,0));
             gl.uniformMatrix4fv(umv, false, flatten(railpointsmv));
             gl.bindBuffer(gl.ARRAY_BUFFER, railBuffer);
             gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
@@ -794,11 +795,6 @@ function render(){
             gl.drawArrays(gl.TRIANGLES, 0, tiePoints.length / 2);
         }
 
-        if(initialLoad){
-            fullCartDraw();
-            riderDraw();
-            initialLoad = false;
-        }
         //Creating the ground square
         gl.uniformMatrix4fv(umv, false, flatten(mv));
         gl.bindBuffer(gl.ARRAY_BUFFER, groundBuffer);
