@@ -60,10 +60,13 @@ var count = 0;
 var camNum = 1;
 var freeRoamSelect = "center";
 var zoom = 45;
+var zoomSave;
 var dolly = 200;
+var dollySave;
 var n;
 var v;
 var u;
+
 
 var trackpoints = [];
 window.onload = function init() {
@@ -101,7 +104,7 @@ window.onload = function init() {
                 headRotAng = 1;
                 headRot = true;
                 break;
-            case "39":
+            case "p":
                 headRotAng = -1;
                 headRot = true;
                 break;
@@ -141,10 +144,16 @@ window.onload = function init() {
                 freeRoamSelect = "center";
                 break;
             case "c":
-                if(camNum === 3)
+                if(camNum === 3) {
                     camNum = 1;
-                else
+                    zoom = zoomSave;
+                }
+                else if(camNum === 1) {
                     camNum++;
+                    zoomSave = zoom;
+                    zoom = 45;
+                } else
+                    camNum++
                 break;
         }
         //we're sending over a vec4 to be used by every vertex until we change
@@ -626,7 +635,7 @@ function makeSpheresAndBuffer(subdiv){
     eyeVerts = [];
 
     for (var lat = 0; lat <= Math.PI ; lat += step){ //latitude
-        for (var lon = 0; lon + step <= 2*Math.PI; lon += step){ //longitude
+        for (var lon = 0; lon + step <= 1+(2*Math.PI); lon += step){ //longitude
             //triangle 1
             headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
             headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
@@ -697,6 +706,7 @@ function update() {
         if (count === trackpoints.length - 2)
             count = 0;
     }
+    cartTransMat();
     requestAnimationFrame(render);
 }
 
@@ -723,7 +733,6 @@ function render(){
         //Setting the field of view
         if(camNum === 1) { //free
             if (freeRoamSelect === "car") {
-                cartTransMat();
                 mv = lookAt(vec3(0, 70, dolly), vec3(trackpoints[count][0], trackpoints[count][1] + 2, trackpoints[count][2]), vec3(0, 1, 0));
             }
             else
@@ -786,7 +795,6 @@ function render(){
         }
 
         if(initialLoad){
-            cartTransMat();
             fullCartDraw();
             riderDraw();
             initialLoad = false;
@@ -800,7 +808,6 @@ function render(){
 
         if (mode === "go") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to stop the cart's movement.");
-            cartTransMat();
             fullCartDraw();
             riderDraw();
         }
