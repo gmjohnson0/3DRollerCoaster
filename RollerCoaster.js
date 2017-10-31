@@ -13,7 +13,7 @@ var headBuffer;
 var eyeBuffer;
 var tiePoints = []; //verticies of rail ties
 var railPoints = []; //verticies of rails
-var headVerts; //verticies of head
+var sphereVerts; //verticies of head
 var eyeVerts; //verticies of eyes
 var mv;
 
@@ -29,10 +29,25 @@ var rim3mv;
 var rim4mv;
 var riderEyesmv; //mv for the rider's eyes
 var riderHeadmv; //mv for the rider's head
+var headlightmv;
+var headlightcapmv;
+
+var redOn = true;
+var greenOn = false;
+var blueOn = false;
+var whiteOn = true;
+var spotLightOn = false;
+var redBallmv;
+var greenBallmv;
+var blueBallmv;
+var whiteBallmv;
+
 
 var umv;
 var uproj;
 var parseComplete = false;
+
+var vAmbientDiffuseColor;
 
 var headRotAng = 0;
 
@@ -40,10 +55,16 @@ var segments = 20; //How many triangles make up each wheel
 var axel = 1;
 
 var vPosition;
+var vNormal;
 var vColor;
+var vSpecularColor;
+var vSpecularExponent;
+var light_position;
+var light_color;
+var ambient_light;
 
 var mode = "stop"; //cart movement
-var rotateAngle //rotation of wheel rims
+var rotateAngle; //rotation of wheel rims
 var count = 0; //track point count
 
 var camNum = 1; //camera choice
@@ -69,8 +90,19 @@ window.onload = function init() {
     }
 
     //Take the vertex and fragment shaders we provided and compile them into a shader program
-    program = initShaders(gl, "vertex-shader", "fragment-shader");
+    program = initShaders(gl, "vshader-phong.glsl", "fshader-phong.glsl");
     gl.useProgram(program); //and we want to use that program for our rendering
+
+    umv =(gl.getUniformLocation(program, "model_view"));
+    uproj = (gl.getUniformLocation(program, "projection"));
+    vPosition = (gl.getAttribLocation(program, "vPosition"));
+    vNormal = (gl.getAttribLocation(program, "vNormal"));
+    vAmbientDiffuseColor = (gl.getAttribLocation(program, "vAmbientDiffuseColor"));
+    vSpecularColor = (gl.getAttribLocation(program, "vSpecularColor"));
+    vSpecularExponent = (gl.getAttribLocation(program, "vSpecularExponent"));
+    light_position = (gl.getUniformLocation(program, "light_position"));
+    light_color = (gl.getUniformLocation(program, "light_color"));
+    ambient_light = (gl.getUniformLocation(program, "ambient_light"));
 
     umv = gl.getUniformLocation(program, "model_view");
     uproj = gl.getUniformLocation(program, "projection");
@@ -88,7 +120,7 @@ window.onload = function init() {
             //rotate head left
             case "ArrowLeft":
                 if(headRotAng > -75)
-                headRotAng -=1;
+                    headRotAng -=1;
                 break;
             //stop/start cart movement
             case "m":
@@ -118,8 +150,8 @@ window.onload = function init() {
             //dolly out. Max dolly
             case "e":
                 if(camNum === 1)
-                    if(dolly !=225  )
-                        dolly +=1;
+                    if(dolly != 225  )
+                        dolly += 1;
                 break;
             //switch free roam cam
             case "f":
@@ -146,7 +178,42 @@ window.onload = function init() {
                     zoomSave = zoom;
                     zoom = 45;
                 } else
-                    camNum++
+                    camNum++;
+                break;
+            case "1":
+                if (redOn === false) {
+                    redOn = true;
+                } else {
+                    redOn = false;
+                }
+                break;
+            case "2":
+                if (greenOn === false) {
+                    greenOn = true;
+                } else {
+                    greenOn = false;
+                }
+                break;
+            case "3":
+                if (blueOn === false) {
+                    blueOn = true;
+                } else {
+                    blueOn = false;
+                }
+                break;
+            case "4":
+                if (whiteOn === false) {
+                    whiteOn = true;
+                } else {
+                    whiteOn = false;
+                }
+                break;
+            case "1":
+                if (spotLightOn === false) {
+                    spotLightOn = true;
+                } else {
+                    spotLightOn = false;
+                }
                 break;
         }
         //we're sending over a vec4 to be used by every vertex until we change
@@ -172,7 +239,7 @@ window.onload = function init() {
             console.log("File not supported: " + file.type + ".");
         }
     });
-    makeCartAndBuffer();
+    makeCartAndBuffer(30);
     makeWheelsAndBuffer();
     makeRimsAndBuffer();
     makeGroundAndBuffer();
@@ -183,10 +250,10 @@ window.onload = function init() {
 
     //White background
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.vertexAttrib1f(vSpecularExponent, 50);
 
     //we need to do this to avoid having objects that are behind other objects show up anyway
     gl.enable(gl.DEPTH_TEST);
-
 
     window.setInterval(update, 16); //target 60 frames per second
 };
@@ -203,206 +270,271 @@ function parseData(input){
 function makeRailsAndBuffer(){
 
     railPoints.push(vec4(2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, -1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, -1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(- 2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, -1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(- 2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, -1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(- 2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, -1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0, 0, 0, 1.0));
+    railPoints.push(vec4(0, 0, -1, 0));
+    // railPoints.push(vec4(0, 0, 0, 1.0));
 
     //neg end
     railPoints.push(vec4(-2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, 1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, 1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, 1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, 1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 0, 1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
-
+    railPoints.push(vec4(0, 0, 1, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0tie
     //top
     railPoints.push(vec4(-2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, 1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
 
     //bottom
     railPoints.push(vec4(-2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, -1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2,  0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, -1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, -1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, -1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, -1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(0, -1, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
 
     //left
     railPoints.push(vec4(-2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(-1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(-1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(-1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(-1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(-1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(-2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(-1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
 
     //right
     railPoints.push(vec4(2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 0, -0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 0, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
     railPoints.push(vec4(2, 1, 0.5, 1.0));
-    railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
+    railPoints.push(vec4(1, 0, 0, 0));
+    // railPoints.push(vec4(0.2, 0.2, 0.2, 1.0));
 
     railBuffer = gl.createBuffer();
     //tell WebGL that the buffer we just created is the one we want to work with right now
     gl.bindBuffer(gl.ARRAY_BUFFER, railBuffer);
     //send the local data over to this buffer on the graphics card.  Note our use of Angel's "flatten" function
     gl.bufferData(gl.ARRAY_BUFFER, flatten(railPoints), gl.STATIC_DRAW);
-    vColorvPosition();
+    vNormalvPosition();
 }
 
 //creating railway ties
 function makeTiesAndBuffer(){
     //pos end
     tiePoints.push(vec4(2, - 1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, -1, 0));
     tiePoints.push(vec4(2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, -1, 0));
     tiePoints.push(vec4(- 2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, -1, 0));
     tiePoints.push(vec4(- 2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, -1, 0));
     tiePoints.push(vec4(- 2,  - 1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, -1, 0));
     tiePoints.push(vec4(2, - 1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, -1, 0));
 
     //neg end
     tiePoints.push(vec4(-2, - 1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, 1, 0));
     tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, 1, 0));
     tiePoints.push(vec4(2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, 1, 0));
     tiePoints.push(vec4(2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, 1, 0));
     tiePoints.push(vec4(2, - 1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, 1, 0));
     tiePoints.push(vec4(-2, - 1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 0, 1, 0));
 
     //top
     tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, 1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
     //bottom
     tiePoints.push(vec4(-2, -1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, -1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2,  -1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, -1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, -1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, -1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, -1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, -1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(0, -1, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
     //left
     tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, -1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(-2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(-1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
     //right
     tiePoints.push(vec4(2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, 0, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, -1, -0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2,  -1, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
     tiePoints.push(vec4(2, 0, 0.5, 1.0));
-    tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
+    tiePoints.push(vec4(1, 0, 0, 0));
+    // tiePoints.push(vec4(0.7, 0.49, 0.19, 1.0));
 
     tiesBuffer = gl.createBuffer();
     //tell WebGL that the buffer we just created is the one we want to work with right now
     gl.bindBuffer(gl.ARRAY_BUFFER, tiesBuffer);
     //send the local data over to this buffer on the graphics card.  Note our use of Angel's "flatten" function
     gl.bufferData(gl.ARRAY_BUFFER, flatten(tiePoints), gl.STATIC_DRAW);
-    vColorvPosition();
+    vNormalvPosition();
 }
 
 //creating the ground
 function makeGroundAndBuffer(){
     var groundpoints = []; //array to hold the points constructing/coloring the ground
 
-    groundpoints.push(vec4(100.0, 0.0, -100.0, 1.0));
-    groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    groundpoints.push(vec4(100.0, 0.0, -100.0, 1.0)); //position
+    groundpoints.push(vec4(0.0, 1.0, 0.0, 0.0)); //normal
+    // groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //color
     groundpoints.push(vec4(100.0, 0.0, 100.0, 1.0));
-    groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0));
+    groundpoints.push(vec4(0.0, 1.0, 0.0, 0.0));
+    // groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //color
     groundpoints.push(vec4(-100.0, 0.0, 100.0, 1.0));
-    groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0));
+    groundpoints.push(vec4(0.0, 1.0, 0.0, 0.0));
+    // groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //color
     groundpoints.push(vec4(-100.0, 0.0, 100.0, 1.0));
-    groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0));
+    groundpoints.push(vec4(0.0, 1.0, 0.0, 0.0));
+    // groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //color
     groundpoints.push(vec4(-100.0, 0.0, -100.0, 1.0));
-    groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0));
+    groundpoints.push(vec4(0.0, 1.0, 0.0, 0.0));
+    // groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //color
     groundpoints.push(vec4(100.0, 0.0, -100.0, 1.0));
-    groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0));
+    groundpoints.push(vec4(0.0, 1.0, 0.0, 0.0));
+    // groundpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //color
 
     //we need some graphics memory for this information
     groundBuffer = gl.createBuffer();
@@ -411,101 +543,124 @@ function makeGroundAndBuffer(){
     //send the local data over to this buffer on the graphics card.  Note our use of Angel's "flatten" function
     gl.bufferData(gl.ARRAY_BUFFER, flatten(groundpoints), gl.STATIC_DRAW);
 
-    vColorvPosition();
+    vNormalvPosition();
 }
 
 //creates cart
-function makeCartAndBuffer(){
-    var cartpoints = []; //array to hold the points constructing/coloring the cart
+function makeCartAndBuffer(subdiv){
+    var cartPoints = []; //array to hold the points constructing/coloring the cart
 
-    //front
-    cartpoints.push(vec4(1.0, 1, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
-    cartpoints.push(vec4(1.0, 3, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
-    cartpoints.push(vec4(-1.0, 3, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
-    cartpoints.push(vec4(-1.0, 3, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
-    cartpoints.push(vec4(-1.0, 1, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
-    cartpoints.push(vec4(1.0, 1, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    var step = (360.0 / subdiv)*(Math.PI / 180.0); //how much do we increase the angles by per triangle
 
-    //back
-    cartpoints.push(vec4(-1.0, 1, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 1.0, 1.0)); //magenta
-    cartpoints.push(vec4(-1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
-    cartpoints.push(vec4(1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
-    cartpoints.push(vec4(1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
-    cartpoints.push(vec4(1.0, 1, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
-    cartpoints.push(vec4(-1.0, 1, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
+    for (var lat = 0; lat <= Math.PI ; lat += step){ //latitude
+        for (var lon = 0; lon + step <= 1+(2*Math.PI); lon += step){ //longitude
+            //triangle 1
+            cartPoints.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
+            cartPoints.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
+            cartPoints.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
+            cartPoints.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
+            cartPoints.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
+            cartPoints.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
 
-    //right
-    cartpoints.push(vec4(1.0, 3.0, 2.0, 1.0));
-    cartpoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
-    cartpoints.push(vec4(1.0, 1.0, 2.0, 1.0));
-    cartpoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
-    cartpoints.push(vec4(1.0, 1.0, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
-    cartpoints.push(vec4(1.0, 1.0, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
-    cartpoints.push(vec4(1.0, 3.0, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
-    cartpoints.push(vec4(1.0, 3.0, 2.0, 1.0));
-    cartpoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+            //triangle 2
+            cartPoints.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
+            cartPoints.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            cartPoints.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
+            cartPoints.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
+            cartPoints.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
+            cartPoints.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
+        }
+    }
 
-    //left
-    cartpoints.push(vec4(-1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
-    cartpoints.push(vec4(-1.0, 1.0, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
-    cartpoints.push(vec4(-1.0, 1.0, 2.0, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
-    cartpoints.push(vec4(-1.0, 1.0, 2.0, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
-    cartpoints.push(vec4(-1.0, 3, 2.0, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
-    cartpoints.push(vec4(-1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
-
-    //top
-    cartpoints.push(vec4(1.0, 3, 2, 1.0));
-    cartpoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
-    cartpoints.push(vec4(1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
-    cartpoints.push(vec4(-1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
-    cartpoints.push(vec4(-1.0, 3, -2.5, 1.0));
-    cartpoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
-    cartpoints.push(vec4(-1.0, 3, 2, 1.0));
-    cartpoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
-    cartpoints.push(vec4(1.0, 3, 2, 1.0));
-    cartpoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
-
-    //bottom
-    cartpoints.push(vec4(1.0, 1, -2.5, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
-    cartpoints.push(vec4(1.0, 1, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
-    cartpoints.push(vec4(-1.0, 1, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
-    cartpoints.push(vec4(-1.0, 1, 2, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
-    cartpoints.push(vec4(-1.0, 1, -2.5, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
-    cartpoints.push(vec4(1.0, 1, -2.5, 1.0));
-    cartpoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    //For a rectangular cart
+    // //front
+    // cartPoints.push(vec4(1.0, 1, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    // cartPoints.push(vec4(1.0, 3, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    // cartPoints.push(vec4(-1.0, 3, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    // cartPoints.push(vec4(-1.0, 3, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    // cartPoints.push(vec4(-1.0, 1, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    // cartPoints.push(vec4(1.0, 1, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 1.0, 1.0)); //cyan
+    //
+    // //back
+    // cartPoints.push(vec4(-1.0, 1, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 1.0, 1.0)); //magenta
+    // cartPoints.push(vec4(-1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
+    // cartPoints.push(vec4(1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
+    // cartPoints.push(vec4(1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
+    // cartPoints.push(vec4(1.0, 1, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
+    // cartPoints.push(vec4(-1.0, 1, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 1.0, 1.0));//magenta
+    //
+    // //right
+    // cartPoints.push(vec4(1.0, 3.0, 2.0, 1.0));
+    // cartPoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+    // cartPoints.push(vec4(1.0, 1.0, 2.0, 1.0));
+    // cartPoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+    // cartPoints.push(vec4(1.0, 1.0, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+    // cartPoints.push(vec4(1.0, 1.0, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+    // cartPoints.push(vec4(1.0, 3.0, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+    // cartPoints.push(vec4(1.0, 3.0, 2.0, 1.0));
+    // cartPoints.push(vec4(1.0, 1.0, 0.0, 1.0)); //yellow
+    //
+    // //left
+    // cartPoints.push(vec4(-1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
+    // cartPoints.push(vec4(-1.0, 1.0, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
+    // cartPoints.push(vec4(-1.0, 1.0, 2.0, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
+    // cartPoints.push(vec4(-1.0, 1.0, 2.0, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
+    // cartPoints.push(vec4(-1.0, 3, 2.0, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
+    // cartPoints.push(vec4(-1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(1.0, 0.0, 0.0, 1.0)); //red
+    //
+    // //top
+    // cartPoints.push(vec4(1.0, 3, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
+    // cartPoints.push(vec4(1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
+    // cartPoints.push(vec4(-1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
+    // cartPoints.push(vec4(-1.0, 3, -2.5, 1.0));
+    // cartPoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
+    // cartPoints.push(vec4(-1.0, 3, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
+    // cartPoints.push(vec4(1.0, 3, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 0.0, 1.0, 1.0)); //blue
+    //
+    // //bottom
+    // cartPoints.push(vec4(1.0, 1, -2.5, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    // cartPoints.push(vec4(1.0, 1, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    // cartPoints.push(vec4(-1.0, 1, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    // cartPoints.push(vec4(-1.0, 1, 2, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    // cartPoints.push(vec4(-1.0, 1, -2.5, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
+    // cartPoints.push(vec4(1.0, 1, -2.5, 1.0));
+    // cartPoints.push(vec4(0.0, 1.0, 0.0, 1.0)); //green
 
     cartBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, cartBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(cartpoints), gl.STATIC_DRAW);
-    vColorvPosition();
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(cartPoints), gl.STATIC_DRAW);
+    vNormalvPosition();
 }
 
 //creates rims
@@ -549,22 +704,27 @@ function makeRimsAndBuffer() {
         y1 = (Math.sin(theta * i)*0.66);
         //This is the center point
         rimpoints.push(vec4(0, 0, 0, 1.0));
-        rimpoints.push(vec4(r, g, b, 1.0));
+        rimpoints.push(vec4(-1, 0, 0, 0));
+        // rimpoints.push(vec4(r, g, b, 1.0));
         if(i < segments){
             //The outside triangle vertices
             z2 = (Math.cos(theta * (i+1))*0.66);
             y2 = (Math.sin(theta * (i+1))*0.66);
             rimpoints.push(vec4(0, y1, z1, 1.0));
-            rimpoints.push(vec4(r, g, b, 1.0));
+            rimpoints.push(vec4(-1, 0, 0, 0));
+            // rimpoints.push(vec4(r, g, b, 1.0));
             rimpoints.push(vec4(0, y2, z2, 1.0));
-            rimpoints.push(vec4(r, g, b, 1.0));
+            rimpoints.push(vec4(-1, 0, 0, 0));
+            // rimpoints.push(vec4(r, g, b, 1.0));
         }else{
             //redraws the last two points in the middle
             //This is done to avoid indexing out of bounds
-            rimpoints.push(vec4(0,0,0,1.0));
-            rimpoints.push(vec4(r, g, b, 1.0));
-            rimpoints.push(vec4(0,0,0,1.0));
-            rimpoints.push(vec4(r, g, b, 1.0));
+            rimpoints.push(vec4(0, 1, 0, 1.0));
+            rimpoints.push(vec4(-1, 0, 0, 0));
+            // rimpoints.push(vec4(r, g, b, 1.0));
+            rimpoints.push(vec4(0, 1, 0, 1.0));
+            rimpoints.push(vec4(-1, 0, 0, 0));
+            // rimpoints.push(vec4(r, g, b, 1.0));
         }
     }
 
@@ -572,7 +732,7 @@ function makeRimsAndBuffer() {
     gl.bindBuffer(gl.ARRAY_BUFFER, rimBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(rimpoints), gl.STATIC_DRAW);
 
-    vColorvPosition();
+    vNormalvPosition();
 }
 
 //create outer wheels
@@ -584,107 +744,107 @@ function makeWheelsAndBuffer() {
     var z2;
     var y2;
 
-    //Constructs an open cylinder out of rectangles
     for(var i = 0; i < segments +1; i++){
+
         z1 = (Math.cos(theta * i)*0.66)+axel;
         y1 = (Math.sin(theta * i)*0.66);
         if(i < segments){
             z2 = (Math.cos(theta * (i+1))*0.66)+axel;
             y2 = (Math.sin(theta * (i+1))*0.66);
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0, 0.0, 1.0)); //black
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0, 0.0, 1.0)); //black
             wheelpoints.push(vec4(0, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
             wheelpoints.push(vec4(0, y2, z2, 1.0));
-            wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y2, z2-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
             wheelpoints.push(vec4(0, y2, z2, 1.0));
-            wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y2, z2-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y2, z2, 1.0));
-            wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y2, z2-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0, 0.0, 1.0));
         }else{
             //handles the last facing for the iterator on a single point.
             //This is needed to avoid indexing out of bounds.
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
             wheelpoints.push(vec4(.5, y1, z1, 1.0));
-            wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
+            wheelpoints.push(vec4(0.0, y1, z1-axel, 0));
+            // wheelpoints.push(vec4(0.0, 0.0, 0.0, 1.0));
         }
     }
     wheelBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(wheelpoints), gl.STATIC_DRAW);
-    vColorvPosition();
+    vNormalvPosition();
 }
 
 //creating spheres
 function makeSpheresAndBuffer(subdiv){
 
     var step = (360.0 / subdiv)*(Math.PI / 180.0); //how much do we increase the angles by per triangle?
-    headVerts = [];
+    sphereVerts = [];
     eyeVerts = [];
 
     for (var lat = 0; lat <= Math.PI ; lat += step){ //latitude
         for (var lon = 0; lon + step <= 1+(2*Math.PI); lon += step){ //longitude
             //triangle 1
-            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
-            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
-            headVerts.push(vec4(.75, .75, .75, 1.0));
-            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
-            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
-            headVerts.push(vec4(.75, .75, .75, 1.0));
-            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
-            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            headVerts.push(vec4(.75, .75, .75, 1.10));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
 
             //triangle 2
-            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
-            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            headVerts.push(vec4(.75, .75, .75, 1.0));
-            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
-            headVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
-            headVerts.push(vec4(.75, .75, .75, 1.0));
-            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
-            headVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
-            headVerts.push(vec4(.75, .75, .75, 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
+            sphereVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
+            sphereVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
 
             //triangle 1
             eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0)); //position
             eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0)); //normal
-            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
             eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 1.0)); //position
             eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon+step), Math.sin(lat)*Math.sin(lon+step), Math.cos(lat), 0.0)); //normal
-            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
             eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0)); //etc
             eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.10));
 
             //triangle 2
             eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 1.0));
             eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon+step), Math.sin(lon+step)*Math.sin(lat+step), Math.cos(lat+step), 0.0));
-            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
             eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step), 1.0));
             eyeVerts.push(vec4(Math.sin(lat+step)*Math.cos(lon), Math.sin(lat+step)*Math.sin(lon), Math.cos(lat+step),0.0));
-            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
             eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 1.0));
             eyeVerts.push(vec4(Math.sin(lat)*Math.cos(lon), Math.sin(lon)*Math.sin(lat), Math.cos(lat), 0.0));
-            eyeVerts.push(vec4(0.10, 0.10, 0.10, 1.0));
         }
     }
 
     //and send it over to graphics memory
     headBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(headVerts), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(sphereVerts), gl.STATIC_DRAW);
 
     eyeBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, eyeBuffer);
@@ -748,7 +908,7 @@ function render(){
             orbitPoint = mult(translate(0,4.15,.5), orbitPoint);
             orbitPoint = mult(c, orbitPoint);
             headPoint = orbitPoint;
-                var newV = mult(rotate(-headRotAng, u), v);
+            var newV = mult(rotate(-headRotAng, u), v);
             mv = lookAt(vec3(headPoint), add(vec3(orbitPoint), scale(15, vec3(newV))), vec3(0,1,0));
         }
         //reaction cam
@@ -782,7 +942,9 @@ function render(){
             gl.uniformMatrix4fv(umv, false, flatten(trackpointsmv));
             gl.bindBuffer(gl.ARRAY_BUFFER, tiesBuffer);
             gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-            gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+            gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
+            gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(0.7, 0.49, 0.19, 1.0));
+            gl.vertexAttrib4fv(vSpecularColor, vec4(0.05, 0.05, 0.05, 1));
             gl.drawArrays(gl.TRIANGLES, 0, tiePoints.length / 2);
 
             //using the translation matrix to generate rail sections perpendicular to the tie of the same point
@@ -792,7 +954,9 @@ function render(){
             gl.uniformMatrix4fv(umv, false, flatten(railpointsmv));
             gl.bindBuffer(gl.ARRAY_BUFFER, railBuffer);
             gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-            gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+            gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
+            gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(.7, .7, .7, 1));
+            gl.vertexAttrib4fv(vSpecularColor, vec4(0.3, 0.3, 0.3, 1));
             gl.drawArrays(gl.TRIANGLES, 0, tiePoints.length / 2);
 
             //Creating a second rail by translating from the first
@@ -800,7 +964,7 @@ function render(){
             gl.uniformMatrix4fv(umv, false, flatten(railpointsmv));
             gl.bindBuffer(gl.ARRAY_BUFFER, railBuffer);
             gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-            gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+            gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
             gl.drawArrays(gl.TRIANGLES, 0, tiePoints.length / 2);
         }
 
@@ -808,62 +972,93 @@ function render(){
         gl.uniformMatrix4fv(umv, false, flatten(mv));
         gl.bindBuffer(gl.ARRAY_BUFFER, groundBuffer);
         gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+        gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
+        gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(.95, .95, .95, 1));
+        gl.vertexAttrib4fv(vSpecularColor, vec4(0.95, 0.95, 0.95, 1));
+        // gl.vertexAttrib1f(vSpecularExponent, 1.0);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
         if (mode === "go") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to stop the cart's movement.");
             fullCartDraw();
-            riderDraw();
         }
         else if (mode === "stop") {
             document.getElementById("instructDiv").innerHTML = ("Press 'm' to move the cart.");
             fullCartDraw();
-            riderDraw();
+        }
+        gl.uniform4fv(ambient_light, vec4(.2, .2, .2, 1));
+        if (redOn === true) {
+            gl.uniform4fv(light_color, vec4(1, 0, 0, 1));
+            gl.uniform4fv(light_position, mult(mv, vec4(80, 25, 80, 1)));
+        }
+        // else {
+        //     gl.uniform4fv(light_color, vec4(0, 0, 0, 1));
+        // }
+        else if (greenOn === true) {
+            gl.uniform4fv(light_color, vec4(0, 1, 0, 1));
+            gl.uniform4fv(light_position, mult(mv, vec4(-80, 25, 80, 1)));
+        }
+        // else {
+        //     gl.uniform4fv(light_color, vec4(0, 0, 0, 1));
+        // }
+        else if (blueOn === true) {
+            gl.uniform4fv(light_color, vec4(0, 0, 1, 1));
+            gl.uniform4fv(light_position, mult(mv, vec4(-80, 25, -80, 1)));
+        }
+        // else {
+        //     gl.uniform4fv(light_color, vec4(0, 0, 0, 1));
+        // }
+        else if (whiteOn === true) {
+            gl.uniform4fv(light_color, vec4(1, 1, 1, 1));
+            gl.uniform4fv(light_position, mult(mv, vec4(80, 25, 80, 1)));
+        } else {
+            gl.uniform4fv(light_color, vec4(0, 0, 0, 1));
+        }
+        if (spotLightOn === true) {
+
         }
     }
 }
 
 //Vertex color and position calls
-function vColorvPosition(){
-    vPosition = gl.getAttribLocation(program, "vPosition");
+function vNormalvPosition(){
+//    vPosition = gl.getAttribLocation(program, "vPosition");
     //attribute location we just fetched, 4 elements in each vector, data type float, don't normalize this data,
     //each position starts 32 bytes after the start of the previous one, and starts right away at index 0
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
     gl.enableVertexAttribArray(vPosition);
 
-    //The vertex shader also has an attribute named "vColor".  Let's associate the other part of this data to that attribute
-    vColor = gl.getAttribLocation(program, "vColor");
+//    vNormal = gl.getAttribLocation(program, "vNormal");
     //attribute location we just fetched, 4 elements in each vector, data type float, don't normalize this data,
     //each color starts 32 bytes after the start of the previous one, and the first color starts 16 bytes into the data
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
-    gl.enableVertexAttribArray(vColor);
+    gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
+    gl.enableVertexAttribArray(vNormal);
 }
 
 //Removes duplicate code from drawing rims
 function rimDraw(){
     gl.bindBuffer(gl.ARRAY_BUFFER, rimBuffer);
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+    gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
     gl.drawArrays(gl.TRIANGLES, 0, 3*segments +3);
 }
 
 function prismDraw(){
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+    gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
     gl.drawArrays(gl.TRIANGLES, 0, 36);
 }
 
 function wheelDraw(){
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 32, 16);
+    gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
     gl.drawArrays(gl.TRIANGLES, 0, 6 * segments + 6);
 }
 
 function sphereDraw(){
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 48, 0);
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 48, 32);
-    gl.drawArrays(gl.TRIANGLES, 0, (headVerts.length/3));
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribPointer(vNormal, 4, gl.FLOAT, false, 32, 16);
+    gl.drawArrays(gl.TRIANGLES, 0, (sphereVerts.length/2));
 }
 
 //Translation matrix for the cart
@@ -886,28 +1081,47 @@ function cartTransMat(){
 //Draws the entire cart
 function fullCartDraw(){
     cartmv = mult(mv,c);
-    cartmv = mult(cartmv, translate(0,.25,0));
-    gl.uniformMatrix4fv(umv, false, flatten(cartmv));
-    gl.bindBuffer(gl.ARRAY_BUFFER, cartBuffer);
-    prismDraw();
+    cartmv = mult(cartmv, translate(0,2.25,0));
+    // gl.uniformMatrix4fv(umv, false, flatten(cartmv));
+    // gl.bindBuffer(gl.ARRAY_BUFFER, cartBuffer);
+    // sphereDraw();
 
-    //All wheels are generated based on the cart's position
-    wheel1mv = mult(cartmv, translate(-1.5, 1, 0)); //front right
-    gl.uniformMatrix4fv(umv, false, flatten(wheel1mv));
+    headlightmv = mult(cartmv, translate(-.5,0,2));
+    headlightmv = mult(headlightmv, rotateY(90));
+    headlightmv = mult(headlightmv, scalem(4,.5,.5));
+    gl.uniformMatrix4fv(umv, false, flatten(headlightmv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(1, 1, 1, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.3, 0.3, 0.3, 1));
+    // gl.vertexAttrib1f(vSpecularExponent, 30);
     wheelDraw();
 
-    wheel2mv = mult(cartmv, translate(1, 1, 0)); //front left
+    headlightcapmv = mult(headlightmv, translate(0,0,1));
+    gl.uniformMatrix4fv(umv, false, flatten(headlightcapmv));
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(1, 1, 1, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.3, 0.3, 0.3, 1));
+    rimDraw();
+
+
+    //All wheels are generated based on the cart's position
+    wheel1mv = mult(cartmv, translate(-1.5, -1, 0)); //front right
+    gl.uniformMatrix4fv(umv, false, flatten(wheel1mv));
+    gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(0.1, 0.1, 0.1, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.05, 0.05, 0.05, 1));
+    wheelDraw();
+
+    wheel2mv = mult(cartmv, translate(1, -1, 0)); //front left
     gl.uniformMatrix4fv(umv, false, flatten(wheel2mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
 
-    wheel3mv = mult(cartmv, translate(-1.5, 1, -2.5)); //rear right
+    wheel3mv = mult(cartmv, translate(-1.5, -1, -2.5)); //rear right
     gl.uniformMatrix4fv(umv, false, flatten(wheel3mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
 
-    wheel4mv = mult(cartmv, translate(1, 1, -2.5)); //front left
+    wheel4mv = mult(cartmv, translate(1, -1, -2.5)); //front left
     gl.uniformMatrix4fv(umv, false, flatten(wheel4mv));
     gl.bindBuffer(gl.ARRAY_BUFFER, wheelBuffer);
     wheelDraw();
@@ -915,44 +1129,92 @@ function fullCartDraw(){
     //All rims are drawn based on their corresponding wheel location
     rim1mv = mult(wheel1mv, translate(0, 0, 1));
     rim1mv = mult(rim1mv, rotateX(rotateAngle));
-    rim1mv = mult(rim1mv, translate(.25, 0, 0));
+    gl.uniformMatrix4fv(umv, false, flatten(rim1mv));
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(0.5, 0.5, 0.5, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.25, 0.25, 0.25, 1));
+    rimDraw();
+    rim1mv = mult(rim1mv, rotateY(180));
+    rim1mv = mult(rim1mv, translate(-.5, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim1mv));
     rimDraw();
 
     rim2mv = mult(wheel2mv, translate(0, 0, 1));
     rim2mv = mult(rim2mv, rotateX(rotateAngle));
-    rim2mv = mult(rim2mv, translate(.25, 0, 0));
+    gl.uniformMatrix4fv(umv, false, flatten(rim2mv));
+    rimDraw();
+    rim2mv = mult(rim2mv, rotateY(180));
+    rim2mv = mult(rim2mv, translate(-.5, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim2mv));
     rimDraw();
 
     rim3mv = mult(wheel3mv, translate(0, 0, 1));
     rim3mv = mult(rim3mv, rotateX(rotateAngle));
-    rim3mv = mult(rim3mv, translate(.25, 0, 0));
+    gl.uniformMatrix4fv(umv, false, flatten(rim3mv));
+    rimDraw();
+    rim3mv = mult(rim3mv, rotateY(180));
+    rim3mv = mult(rim3mv, translate(-.5, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim3mv));
     rimDraw();
 
     rim4mv = mult(wheel4mv, translate(0, 0, 1));
     rim4mv = mult(rim4mv, rotateX(rotateAngle));
-    rim4mv = mult(rim4mv, translate(.25, 0, 0));
     gl.uniformMatrix4fv(umv, false, flatten(rim4mv));
     rimDraw();
-}
+    rim4mv = mult(rim4mv, rotateY(180));
+    rim4mv = mult(rim4mv, translate(-.5, 0, 0));
+    gl.uniformMatrix4fv(umv, false, flatten(rim4mv));
+    rimDraw();
 
-//Draws the rider
-function riderDraw(){
-    riderHeadmv = mult(cartmv, translate(0,4,.5));
+    riderHeadmv = mult(cartmv, translate(0,1.5,.5));
     riderHeadmv = mult(riderHeadmv, scalem(.75,.75,.75));
     riderHeadmv = mult(riderHeadmv, rotateY(headRotAng));
     gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(0.9, 0.9, 0.9, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.1, 0.1, 0.1, 1));
     gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
     sphereDraw();
     riderEyesmv = mult(riderHeadmv, translate(.5,.15,.75));
     riderEyesmv = mult(riderEyesmv, scalem(.25,.25,.25));
     gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(0.1, 0.1, 0.1, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.2, 0.2, 0.2, 1));
     gl.bindBuffer(gl.ARRAY_BUFFER, eyeBuffer);
     sphereDraw();
     riderEyesmv = mult(riderHeadmv, translate(-.5,.15,.75));
     riderEyesmv = mult(riderEyesmv, scalem(.25,.25,.25));
     gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
     sphereDraw();
+
+    cartmv = mult(cartmv, scalem(1,0.75,2));
+    gl.uniformMatrix4fv(umv, false, flatten(cartmv));
+    gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(0.75, 0, 0, 1.0));
+    gl.vertexAttrib4fv(vSpecularColor, vec4(0.3, 0.3, 0.3, 1));
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, cartBuffer);
+    sphereDraw();
+
+    // redBallmv = mult(mv, translate(80,25,80));
+    // gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
+    // gl.vertexAttrib4fv(vAmbientDiffuseColor, vec4(1, 0, 0, 1.0));
+    // gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
+    // sphereDraw();
 }
+
+//Draws the rider
+// function riderDraw(){
+//     riderHeadmv = mult(cartmv, translate(0,2,.5));
+//     riderHeadmv = mult(riderHeadmv, scalem(.75,.75,.75));
+//     riderHeadmv = mult(riderHeadmv, rotateY(headRotAng));
+//     gl.uniformMatrix4fv(umv, false, flatten(riderHeadmv));
+//     gl.bindBuffer(gl.ARRAY_BUFFER, headBuffer);
+//     sphereDraw();
+//     riderEyesmv = mult(riderHeadmv, translate(.5,.15,.75));
+//     riderEyesmv = mult(riderEyesmv, scalem(.25,.25,.25));
+//     gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
+//     gl.bindBuffer(gl.ARRAY_BUFFER, eyeBuffer);
+//     sphereDraw();
+//     riderEyesmv = mult(riderHeadmv, translate(-.5,.15,.75));
+//     riderEyesmv = mult(riderEyesmv, scalem(.25,.25,.25));
+//     gl.uniformMatrix4fv(umv, false, flatten(riderEyesmv));
+//     sphereDraw();
+// }
